@@ -185,6 +185,7 @@ function getLastDispatchCtx():
       SessionKey?: string;
       MessageThreadId?: string | number;
       ParentSessionKey?: string;
+      SkipParentSessionFork?: boolean;
     }
   | undefined {
   const callArgs = dispatchInboundMessage.mock.calls.at(-1) as unknown[] | undefined;
@@ -194,6 +195,7 @@ function getLastDispatchCtx():
           SessionKey?: string;
           MessageThreadId?: string | number;
           ParentSessionKey?: string;
+          SkipParentSessionFork?: boolean;
         };
       }
     | undefined;
@@ -484,7 +486,7 @@ describe("processDiscordMessage session routing", () => {
     });
   });
 
-  it("can start native Discord threads fresh without parent session linkage", async () => {
+  it("can start native Discord threads fresh without forking while preserving parent linkage", async () => {
     const ctx = await createBaseContext({
       discordConfig: { threadContext: { parentInheritance: "fresh" } },
       messageChannelId: "thread-1",
@@ -501,8 +503,9 @@ describe("processDiscordMessage session routing", () => {
     expect(getLastDispatchCtx()).toMatchObject({
       SessionKey: "agent:main:discord:channel:thread-1",
       MessageThreadId: "thread-1",
+      ParentSessionKey: "agent:main:discord:channel:c-parent",
+      SkipParentSessionFork: true,
     });
-    expect(getLastDispatchCtx()?.ParentSessionKey).toBeUndefined();
   });
 });
 

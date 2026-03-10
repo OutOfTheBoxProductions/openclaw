@@ -283,6 +283,7 @@ export async function processDiscordMessage(ctx: DiscordMessagePreflightContext)
   let threadStarterBody: string | undefined;
   let threadLabel: string | undefined;
   let parentSessionKey: string | undefined;
+  let skipParentSessionFork: boolean | undefined;
   if (threadChannel) {
     const threadParentInheritanceMode = resolveDiscordThreadParentInheritanceMode({
       discordConfig,
@@ -305,12 +306,15 @@ export async function processDiscordMessage(ctx: DiscordMessagePreflightContext)
     threadLabel = threadName
       ? `Discord thread #${normalizeDiscordSlug(parentName)} › ${threadName}`
       : `Discord thread #${normalizeDiscordSlug(parentName)}`;
-    if (threadParentId && threadParentInheritanceMode === "fork") {
+    if (threadParentId) {
       parentSessionKey = buildAgentSessionKey({
         agentId: route.agentId,
         channel: route.channel,
         peer: { kind: "channel", id: threadParentId },
       });
+      if (threadParentInheritanceMode === "fresh") {
+        skipParentSessionFork = true;
+      }
     }
   }
   const mediaPayload = buildDiscordMediaPayload(mediaList);
@@ -389,6 +393,7 @@ export async function processDiscordMessage(ctx: DiscordMessagePreflightContext)
     ReplyToBody: replyContext?.body,
     ReplyToSender: replyContext?.sender,
     ParentSessionKey: autoThreadContext?.ParentSessionKey ?? threadKeys.parentSessionKey,
+    SkipParentSessionFork: skipParentSessionFork,
     MessageThreadId: threadChannel?.id ?? autoThreadContext?.createdThreadId ?? undefined,
     ThreadStarterBody: threadStarterBody,
     ThreadLabel: threadLabel,
