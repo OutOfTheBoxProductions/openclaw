@@ -25,6 +25,10 @@ import { isDangerousNameMatchingEnabled } from "../../config/dangerous-name-matc
 import { resolveDiscordPreviewStreamMode } from "../../config/discord-preview-streaming.js";
 import { resolveMarkdownTableMode } from "../../config/markdown-tables.js";
 import { readSessionUpdatedAt, resolveStorePath } from "../../config/sessions.js";
+import type {
+  DiscordConfig,
+  DiscordThreadParentInheritanceMode,
+} from "../../config/types.discord.js";
 import { danger, logVerbose, shouldLogVerbose } from "../../globals.js";
 import { convertMarkdownTables } from "../../markdown/tables.js";
 import { getAgentScopedMediaLocalRoots } from "../../media/local-roots.js";
@@ -61,8 +65,8 @@ function sleep(ms: number): Promise<void> {
 const DISCORD_TYPING_MAX_DURATION_MS = 20 * 60_000;
 
 function resolveDiscordThreadParentInheritanceMode(params: {
-  discordConfig?: { threadContext?: { parentInheritance?: string } } | null;
-}): "fork" | "fresh" {
+  discordConfig?: DiscordConfig | null;
+}): DiscordThreadParentInheritanceMode {
   return params.discordConfig?.threadContext?.parentInheritance === "fresh" ? "fresh" : "fork";
 }
 
@@ -279,8 +283,10 @@ export async function processDiscordMessage(ctx: DiscordMessagePreflightContext)
   let threadStarterBody: string | undefined;
   let threadLabel: string | undefined;
   let parentSessionKey: string | undefined;
-  const threadParentInheritanceMode = resolveDiscordThreadParentInheritanceMode({ discordConfig });
   if (threadChannel) {
+    const threadParentInheritanceMode = resolveDiscordThreadParentInheritanceMode({
+      discordConfig,
+    });
     const includeThreadStarter = channelConfig?.includeThreadStarter !== false;
     if (includeThreadStarter) {
       const starter = await resolveDiscordThreadStarter({
