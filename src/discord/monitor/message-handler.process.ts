@@ -342,6 +342,13 @@ export async function processDiscordMessage(ctx: DiscordMessagePreflightContext)
   const replyTarget = replyPlan.replyTarget;
   const replyReference = replyPlan.replyReference;
   const autoThreadContext = replyPlan.autoThreadContext;
+  if (
+    !skipParentSessionFork &&
+    autoThreadContext?.ParentSessionKey &&
+    resolveDiscordThreadParentInheritanceMode({ discordConfig }) === "fresh"
+  ) {
+    skipParentSessionFork = true;
+  }
 
   const effectiveFrom = isDirectMessage
     ? `discord:${author.id}`
